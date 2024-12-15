@@ -2,6 +2,7 @@ package KyTucXa;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
@@ -38,12 +39,13 @@ public class QL_KhuVuc extends JFrame {
         panelHeader.add(panelSearch, BorderLayout.EAST);
 
         // ======= TABLE =======
-        tableModel = new DefaultTableModel(new String[]{"ID", "Tên Khu Vực", "Vị Trí", "Mô Tả", "Ngày Tạo", "Ngày Cập Nhật"}, 0);
+        tableModel = new DefaultTableModel(new String[]{"ID","Tên Khu Vực", "Vị Trí", "Mô Tả", "Ngày Tạo", "Ngày Cập Nhật"}, 0);
         table = new JTable(tableModel);
         JScrollPane tableScrollPane = new JScrollPane(table);
 
         // Load dữ liệu
         loadTableData();
+        hideColumn(0);
 
         // ======= BUTTONS =======
         JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -68,7 +70,12 @@ public class QL_KhuVuc extends JFrame {
         btnLamMoi.addActionListener(e -> loadTableData());
         btnTimKiem.addActionListener(e -> searchRecord());
     }
-
+    // ======= Ẩn Cột =======
+    private void hideColumn(int columnIndex) {
+        TableColumnModel columnModel = table.getColumnModel();
+        columnModel.removeColumn(columnModel.getColumn(columnIndex));
+    }
+    
     // ======= Kết nối Database =======
     private void connectDatabase() {
         try {
@@ -81,7 +88,7 @@ public class QL_KhuVuc extends JFrame {
 
     // ======= Load Dữ Liệu =======
     private void loadTableData() {
-        tableModel.setRowCount(0);
+        tableModel.setRowCount(0); // Xóa toàn bộ dữ liệu cũ trong bảng
         try {
             String sql = "SELECT * FROM khu_vuc";
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -97,10 +104,10 @@ public class QL_KhuVuc extends JFrame {
                 });
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + e.getMessage());
         }
     }
-
+    
     // ======= Mở Form Thêm/Sửa =======
     private void openAddOrEditForm(Integer selectedId) {
         JDialog dialog = new JDialog(this, selectedId == null ? "Thêm Mới Khu Vực" : "Cập Nhật Khu Vực", true);
@@ -162,46 +169,81 @@ public class QL_KhuVuc extends JFrame {
         dialog.setVisible(true);
     }
 
-    // ======= Chỉnh Sửa =======
+ // ======= Cập nhật hàm Sửa =======
     private void editSelectedRow() {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            int selectedId = (int) tableModel.getValueAt(row, 0);
-            openAddOrEditForm(selectedId);
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần sửa!");
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa.");
+            return;
         }
-    }
 
-    // ======= Xóa Dòng =======
+        // Lấy ID từ dòng được chọn (ẩn trong cột đầu tiên)
+        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
+
+        // Mở form thêm/sửa với ID đã chọn
+        openAddOrEditForm(id);
+    }
+    
+ // ======= Cập nhật hàm Xóa =======
     private void deleteSelectedRow() {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            int id = (int) tableModel.getValueAt(row, 0);
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để xóa.");
+            return;
+        }
+
+        // Lấy ID từ dòng được chọn
+        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa khu vực này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
             try {
-                PreparedStatement ps = conn.prepareStatement("DELETE FROM khu_vuc WHERE id = ?");
+                String sql = "DELETE FROM khu_vuc WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setInt(1, id);
                 ps.executeUpdate();
-                loadTableData();
+
                 JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                loadTableData();
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xóa: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
         }
     }
+    
+ // ======= Cập nhật hàm Làm mới =======
+    
+    
+    //=========== tìm kiếm =================
+ private void searchRecord() {
+    // Lấy từ khóa tìm kiếm từ ô nhập liệu
+    String keyword = txtTimKiem.getText().trim();
 
-    // ======= Tìm Kiếm =======
-    private void searchRecord() {
-        tableModel.setRowCount(0);
-        try {
-            String keyword = txtTimKiem.getText().trim().toLowerCase();
-            String sql = "SELECT * FROM khu_vuc WHERE LOWER(name) LIKE ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, "%" + keyword + "%");
-            ResultSet rs = ps.executeQuery();
+    // Kiểm tra nếu từ khóa rỗng
+    if (keyword.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    // Xóa dữ liệu cũ trong bảng
+    tableModel.setRowCount(0);
+
+    // Chuẩn bị câu lệnh SQL
+    String sql = "SELECT * FROM khu_vuc WHERE name LIKE ? OR vi_tri LIKE ? OR mo_ta LIKE ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        // Thiết lập tham số cho câu lệnh SQL
+        String searchPattern = "%" + keyword + "%";
+        ps.setString(1, searchPattern);
+        ps.setString(2, searchPattern);
+        ps.setString(3, searchPattern);
+
+        // Thực thi truy vấn
+        try (ResultSet rs = ps.executeQuery()) {
+            boolean hasResults = false;
+
+            // Duyệt qua kết quả truy vấn và thêm vào bảng
             while (rs.next()) {
+                hasResults = true;
                 tableModel.addRow(new Object[]{
                         rs.getInt("id"),
                         rs.getString("name"),
@@ -211,10 +253,18 @@ public class QL_KhuVuc extends JFrame {
                         rs.getTimestamp("ngay_cap_nhat")
                 });
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+            // Hiển thị thông báo nếu không có kết quả
+            if (!hasResults) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả nào.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
         }
+    } catch (SQLException e) {
+        // Xử lý lỗi SQL
+        JOptionPane.showMessageDialog(this, "Lỗi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace(); // Debug lỗi SQL
     }
+}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new QL_KhuVuc().setVisible(true));
