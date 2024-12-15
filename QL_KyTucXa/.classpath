@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-21">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/com.ibm.icu_75.1.0.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/com.ibm.icu_75.1.0.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/jakarta.annotation-api_2.1.1.jar" sourcepath="C:/Users/ASUS/.m2/repository/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1-sources.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.core.commands_3.12.200.v20240627-1019.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.core.commands_3.12.200.v20240627-1019.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.core.runtime_3.31.100.v20240524-2010.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.core.runtime_3.31.100.v20240524-2010.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.e4.ui.di_1.5.400.v20240321-1245.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.e4.ui.di_1.5.400.v20240321-1245.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.equinox.common_3.19.100.v20240524-2011.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.equinox.common_3.19.100.v20240524-2011.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.equinox.registry_3.12.100.v20240524-2011.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.equinox.registry_3.12.100.v20240524-2011.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.jface_3.35.0.v20240820-2045.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.jface_3.35.0.v20240820-2045.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.jface.text_3.25.200.v20240816-1151.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.jface.text_3.25.200.v20240816-1151.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.osgi_3.21.0.v20240717-2103.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.osgi_3.21.0.v20240717-2103.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.swt.win32.win32.x86_64_3.127.0.v20240903-0618.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.swt.win32.win32.x86_64_3.127.0.v20240903-0618.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.text_3.14.100.v20240524-2010.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.text_3.14.100.v20240524-2010.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.ui.forms_3.13.300.v20240424-0956.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.ui.forms_3.13.300.v20240424-0956.jar"/>
+	<classpathentry kind="lib" path="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.ui.workbench_3.133.0.v20240818-1923.jar" sourcepath="F:/KNM/Java/eclipse-jee-2024-09-R-win32-x86_64/eclipse/plugins/org.eclipse.ui.workbench_3.133.0.v20240818-1923.jar"/>
+	<classpathentry kind="lib" path="F:/Java/ThayPhuc/mysql-connector-j-9.1.0/mysql-connector-j-9.1.0/mysql-connector-j-9.1.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
