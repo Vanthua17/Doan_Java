@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
+/// t s x ok!!!
 public class QL_KhuVuc extends JFrame {
     private JTextField txtTimKiem;
     private JButton btnTimKiem, btnLamMoi;

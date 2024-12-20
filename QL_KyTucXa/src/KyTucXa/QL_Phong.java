@@ -101,8 +101,12 @@ public class QL_Phong extends JFrame {
 
     //=== ẩn cột ID====
     private void hideColumn(int columnIndex) {
-        TableColumnModel columnModel = table.getColumnModel();
-        columnModel.removeColumn(columnModel.getColumn(columnIndex));
+    	 TableColumnModel columnModel = table.getColumnModel();
+    	    // Ẩn cột đầu tiên (cột ID)
+    	    columnModel.getColumn(columnIndex).setMinWidth(0);  // Đặt chiều rộng tối thiểu của cột thành 0
+    	    columnModel.getColumn(columnIndex).setMaxWidth(0);  // Đặt chiều rộng tối đa của cột thành 0
+    	    columnModel.getColumn(columnIndex).setWidth(0);     // Đặt chiều rộng của cột thành 0
+    	    columnModel.getColumn(columnIndex).setResizable(false); 
     }
 
     //====== xóa ==============
