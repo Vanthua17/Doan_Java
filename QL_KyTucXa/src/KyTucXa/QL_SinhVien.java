@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-
+// t s x ok
 public class QL_SinhVien extends JFrame {
     private JTextField txtTimKiem;
     private JButton btnSua, btnXoa, btnLamMoi, btnTimKiem;

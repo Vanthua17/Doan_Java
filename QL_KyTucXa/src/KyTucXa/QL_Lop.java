@@ -2,9 +2,10 @@ package KyTucXa;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.sql.*;
-
+// mô phật, xong
 public class QL_Lop extends JFrame {
     private JTextField txtTimKiem;
     private JButton btnSua, btnXoa, btnLamMoi, btnTimKiem;
@@ -43,6 +44,7 @@ public class QL_Lop extends JFrame {
 
         // Tải dữ liệu từ database
         loadTableData();
+        hideColumn(0);
 
         // ======= BUTTONS =======
         JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -61,11 +63,11 @@ public class QL_Lop extends JFrame {
         add(panelButtons, BorderLayout.SOUTH);
 
         // ======= EVENTS =======
-        btnThemMoi.addActionListener(e -> openAddForm());
-        btnTimKiem.addActionListener(e -> searchRecord());
-        btnLamMoi.addActionListener(e -> loadTableData());
-        btnSua.addActionListener(e -> editRecord());
+        btnThemMoi.addActionListener(e -> openAddOrEditForm(null));
+        btnSua.addActionListener(e -> editSelectedRow());
         btnXoa.addActionListener(e -> deleteRecord());
+        btnLamMoi.addActionListener(e -> loadTableData());
+        btnTimKiem.addActionListener(e -> searchRecord());
     }
 
     // ======= Kết nối Database =======
@@ -76,6 +78,12 @@ public class QL_Lop extends JFrame {
             JOptionPane.showMessageDialog(this, "Kết nối cơ sở dữ liệu thất bại!");
             e.printStackTrace();
         }
+    }
+
+    // Ẩn cột ID
+    private void hideColumn(int columnIndex) {
+        TableColumnModel columnModel = table.getColumnModel();
+        columnModel.removeColumn(columnModel.getColumn(columnIndex));
     }
 
     // ======= Load Dữ Liệu =======
@@ -99,50 +107,74 @@ public class QL_Lop extends JFrame {
         }
     }
 
-    // ======= Mở Form Thêm Mới =======
-    private void openAddForm() {
-        JDialog addDialog = new JDialog(this, "Thêm Mới Lớp", true);
-        addDialog.setSize(400, 300);
-        addDialog.setLocationRelativeTo(this);
+    private void openAddOrEditForm(Integer selectedId) {
+        JDialog dialog = new JDialog(this, selectedId == null ? "Thêm Mới Lớp" : "Cập Nhật Lớp", true);
+        dialog.setSize(400, 200);
+        dialog.setLocationRelativeTo(this);
 
-        JPanel panelForm = new JPanel(new GridLayout(3, 2, 10, 10));
-        JTextField txtTenLop = new JTextField();
+        JPanel panelForm = new JPanel(new GridLayout(2, 2, 10, 10));
+        JTextField txtName = new JTextField();
         JTextField txtMoTa = new JTextField();
 
-        panelForm.add(new JLabel("Tên Lớp: "));
-        panelForm.add(txtTenLop);
-        panelForm.add(new JLabel("Mô Tả: "));
+        panelForm.add(new JLabel("Tên Lớp:"));
+        panelForm.add(txtName);
+        panelForm.add(new JLabel("Mô Tả:"));
         panelForm.add(txtMoTa);
 
         JButton btnLuu = new JButton("Lưu");
         JButton btnHuy = new JButton("Hủy");
-
         JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panelButtons.add(btnLuu);
         panelButtons.add(btnHuy);
 
-        addDialog.setLayout(new BorderLayout(10, 10));
-        addDialog.add(panelForm, BorderLayout.CENTER);
-        addDialog.add(panelButtons, BorderLayout.SOUTH);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(panelForm, BorderLayout.CENTER);
+        dialog.add(panelButtons, BorderLayout.SOUTH);
 
+        // Nếu là sửa, điền thông tin hiện có
+        if (selectedId != null) {
+            int row = table.getSelectedRow();
+            txtName.setText(tableModel.getValueAt(row, 1).toString());
+            txtMoTa.setText(tableModel.getValueAt(row, 2).toString());
+        }
+
+        // Sự kiện nút Lưu
         btnLuu.addActionListener(e -> {
             try {
-                String sql = "INSERT INTO lop (ten_lop, mo_ta) VALUES (?, ?)";
+                String sql = selectedId == null
+                        ? "INSERT INTO lop (ten_lop, mo_ta) VALUES (?, ?)"
+                        : "UPDATE lop SET ten_lop = ?, mo_ta = ? WHERE id = ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, txtTenLop.getText().trim());
-                ps.setString(2, txtMoTa.getText().trim());
+                ps.setString(1, txtName.getText());
+                ps.setString(2, txtMoTa.getText());
+                if (selectedId != null) ps.setInt(3, selectedId);
                 ps.executeUpdate();
-                JOptionPane.showMessageDialog(addDialog, "Thêm mới thành công!");
-                addDialog.dispose();
+                JOptionPane.showMessageDialog(dialog, "Lưu thành công!");
+                dialog.dispose();
                 loadTableData();
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(addDialog, "Lỗi khi thêm dữ liệu: " + ex.getMessage());
-                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dialog, "Lỗi: " + ex.getMessage());
             }
         });
 
-        btnHuy.addActionListener(e -> addDialog.dispose());
-        addDialog.setVisible(true);
+        btnHuy.addActionListener(e -> dialog.dispose());
+
+        dialog.setVisible(true);
+    }
+
+    // ======= Cập nhật hàm Sửa =======
+    private void editSelectedRow() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa.");
+            return;
+        }
+
+        // Lấy ID từ dòng được chọn (ẩn trong cột đầu tiên)
+        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
+
+        // Mở form thêm/sửa với ID đã chọn
+        openAddOrEditForm(id);
     }
 
     // ======= Tìm Kiếm Dữ Liệu =======
@@ -169,60 +201,6 @@ public class QL_Lop extends JFrame {
         }
     }
 
-    // ======= Sửa Dữ Liệu =======
-    private void editRecord() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa.");
-            return;
-        }
-
-        int selectedId = (int) tableModel.getValueAt(selectedRow, 0);
-        JDialog editDialog = new JDialog(this, "Sửa Lớp", true);
-        editDialog.setSize(400, 300);
-        editDialog.setLocationRelativeTo(this);
-
-        JPanel panelForm = new JPanel(new GridLayout(3, 2, 10, 10));
-        JTextField txtTenLop = new JTextField(tableModel.getValueAt(selectedRow, 1).toString());
-        JTextField txtMoTa = new JTextField(tableModel.getValueAt(selectedRow, 2).toString());
-
-        panelForm.add(new JLabel("Tên Lớp: "));
-        panelForm.add(txtTenLop);
-        panelForm.add(new JLabel("Mô Tả: "));
-        panelForm.add(txtMoTa);
-
-        JButton btnLuu = new JButton("Lưu");
-        JButton btnHuy = new JButton("Hủy");
-
-        JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelButtons.add(btnLuu);
-        panelButtons.add(btnHuy);
-
-        editDialog.setLayout(new BorderLayout(10, 10));
-        editDialog.add(panelForm, BorderLayout.CENTER);
-        editDialog.add(panelButtons, BorderLayout.SOUTH);
-
-        btnLuu.addActionListener(e -> {
-            try {
-                String sql = "UPDATE lop SET ten_lop = ?, mo_ta = ? WHERE id = ?";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, txtTenLop.getText().trim());
-                ps.setString(2, txtMoTa.getText().trim());
-                ps.setInt(3, selectedId);
-                ps.executeUpdate();
-                JOptionPane.showMessageDialog(editDialog, "Cập nhật thành công!");
-                editDialog.dispose();
-                loadTableData();
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(editDialog, "Lỗi khi cập nhật dữ liệu: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        });
-
-        btnHuy.addActionListener(e -> editDialog.dispose());
-        editDialog.setVisible(true);
-    }
-
     // ======= Xóa Dữ Liệu =======
     private void deleteRecord() {
         int selectedRow = table.getSelectedRow();
@@ -231,7 +209,7 @@ public class QL_Lop extends JFrame {
             return;
         }
 
-        int selectedId = (int) tableModel.getValueAt(selectedRow, 0);
+        int selectedId = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
         int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa lớp này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             try {
@@ -248,6 +226,7 @@ public class QL_Lop extends JFrame {
         }
     }
 
+    // ======= Hàm main để chạy chương trình =======
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             QL_Lop frame = new QL_Lop();

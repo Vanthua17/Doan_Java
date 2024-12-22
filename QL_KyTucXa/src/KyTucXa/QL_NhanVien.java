@@ -4,7 +4,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-// chưa xong!!!
+
+// này ok, t s x ok!
 public class QL_NhanVien extends JFrame {
     private JTextField txtTimKiem;
     private JButton btnSua, btnXoa, btnLamMoi, btnTimKiem;
@@ -158,7 +159,7 @@ public class QL_NhanVien extends JFrame {
             }
 
             // Thực hiện thêm nhân viên mới
-            String sql = "INSERT INTO nhan_vien (mã, ten_nhan_vien, que_quan, so_dien_thoai, email) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO nhan_vien (id, ten_nhan_vien, que_quan, so_dien_thoai, email) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, id);
             ps.setString(2, txtTenNhanVien.getText().trim());
