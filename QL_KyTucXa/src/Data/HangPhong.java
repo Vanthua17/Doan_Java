@@ -1,30 +1,47 @@
 package Data;
+
 import java.sql.Timestamp;
-import DTOs.TrangThaiHangPhong;
+
 public class HangPhong {
-	private int id;
+
+    private int id;
     private String name;
-    private float price;
-    private String description;
-    private TrangThaiHangPhong status; // Change to the enum type
+    private float gia;
+    private String moTa;
+    private int trangThai;
     private int soLuongSV;
     private Timestamp ngayTao;
     private Timestamp ngayCapNhat;
 
-    // Constructor with all parameters (match this with the one in HangPhongDAO)
-    public HangPhong(int id, String name, float price, String description, TrangThaiHangPhong status, int soLuongSV, Timestamp ngayTao, Timestamp ngayCapNhat) {
+    // Constructor mặc định
+    public HangPhong() {
+    }
+
+    // Constructor với tất cả các tham số
+    public HangPhong(int id, String name, float gia, String moTa, int trangThai, int soLuongSV, Timestamp ngayTao, Timestamp ngayCapNhat) {
         this.id = id;
         this.name = name;
-        this.price = price;
-        this.description = description;
-        this.status = status; // Use the enum directly
+        this.gia = gia;
+        this.moTa = moTa;
+        this.trangThai = trangThai;
         this.soLuongSV = soLuongSV;
         this.ngayTao = ngayTao;
         this.ngayCapNhat = ngayCapNhat;
     }
 
+    // Constructor thêm cho trường hợp không có moTa và trangThai
+    public HangPhong(String name, int soLuongSV, float gia, Timestamp ngayTao) {
+        this.name = name;
+        this.soLuongSV = soLuongSV;
+        this.gia = gia;
+        this.ngayTao = ngayTao;
+        this.moTa = ""; // Giá trị mặc định
+        this.trangThai = 1; // Giá trị mặc định (trạng thái kích hoạt)
+        this.ngayCapNhat = ngayTao; // Ngày cập nhật mặc định bằng ngày tạo
+    }
 
-    // Getters and Setters
+    // Getter và Setter cho các thuộc tính
+
     public int getId() {
         return id;
     }
@@ -42,27 +59,27 @@ public class HangPhong {
     }
 
     public float getGia() {
-        return price;
+        return gia;
     }
 
     public void setGia(float gia) {
-        this.price = gia;
+        this.gia = gia;
     }
 
     public String getMoTa() {
-        return description;
+        return moTa;
     }
 
     public void setMoTa(String moTa) {
-        this.description = moTa;
+        this.moTa = moTa;
     }
 
-    public TrangThaiHangPhong getTrangThai() {
-        return status; // Return the enum directly
+    public int getTrangThai() {
+        return trangThai;
     }
 
-    public void setStatus(TrangThaiHangPhong status) {
-        this.status = status; // Set the enum directly
+    public void setTrangThai(int trangThai) {
+        this.trangThai = trangThai;
     }
 
     public int getSoLuongSV() {
@@ -89,15 +106,14 @@ public class HangPhong {
         this.ngayCapNhat = ngayCapNhat;
     }
 
-    // Method to convert object to string (for display purposes)
     @Override
     public String toString() {
         return "HangPhong{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", gia=" + price +
-                ", moTa='" + description + '\'' +
-                ", status=" + status +
+                ", gia=" + gia +
+                ", moTa='" + moTa + '\'' +
+                ", trangThai=" + trangThai +
                 ", soLuongSV=" + soLuongSV +
                 ", ngayTao=" + ngayTao +
                 ", ngayCapNhat=" + ngayCapNhat +

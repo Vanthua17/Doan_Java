@@ -1,8 +1,9 @@
 package Data;
+
 import java.util.Date;
 
 public class TienNghi {
-	private int id;
+    private int id;
     private String name;
     private int soLuong;
     private int ton;
@@ -64,4 +65,4 @@ public class TienNghi {
     public String toString() {
         return name; // Hoặc description, tùy thuộc vào cái bạn muốn hiển thị
     }
-}	
+}

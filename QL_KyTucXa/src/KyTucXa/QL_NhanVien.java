@@ -2,304 +2,269 @@ package KyTucXa;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import DTOs.NhanVienDAO;
+import DTOs.VaiTroDAO;  // Lớp quản lý vai trò
+import Data.NhanVien;
+import Data.VaiTro;  // Lớp vai trò
+//import at.favre.lib.crypto.bcrypt.BCrypt;
 import java.awt.*;
-import java.sql.*;
+import java.sql.Timestamp;
+import java.util.List;
 
-// này ok, t s x ok!
 public class QL_NhanVien extends JFrame {
-    private JTextField txtTimKiem;
-    private JButton btnSua, btnXoa, btnLamMoi, btnTimKiem;
     private JTable table;
     private DefaultTableModel tableModel;
-    private Connection conn;
+    private JButton addButton, deleteButton, editButton;
+    private JLabel totalLabel;
+    private JButton nextButton, prevButton;
+    private JLabel pageLabel;
+
+    private int currentPage = 1;
+    private final int rowsPerPage = 10;
+    private List<NhanVien> dataList;
+    private List<VaiTro> vaiTroList;  // Danh sách vai trò
 
     public QL_NhanVien() {
-        setTitle("Quản Lý Nhân Viên");
-        setSize(800, 600);
+        setTitle("Quản lý Nhân Viên");
+        initComponents();
+        loadNhanVienData();
+
+        setSize(800, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
-        // Kết nối cơ sở dữ liệu
-        connectDatabase();
-
-        // ======= PANEL HEADER =======
-        JPanel panelHeader = new JPanel(new BorderLayout());
-        JButton btnThemMoi = new JButton("+ Thêm mới nhân viên");
-        btnThemMoi.setForeground(Color.WHITE);
-        btnThemMoi.setBackground(new Color(33, 150, 243));
-        txtTimKiem = new JTextField(20);
-        btnTimKiem = new JButton("Tìm Kiếm");
-
-        JPanel panelSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelSearch.add(txtTimKiem);
-        panelSearch.add(btnTimKiem);
-
-        panelHeader.add(btnThemMoi, BorderLayout.WEST);
-        panelHeader.add(panelSearch, BorderLayout.EAST);
-
-        // ======= TABLE =======
-        tableModel = new DefaultTableModel(new String[]{"Mã", "Tên Nhân Viên", "Quê Quán", "Số Điện Thoại", "Email", "Ngày Tạo", "Ngày Cập Nhật"}, 0);
-        table = new JTable(tableModel);
-        JScrollPane tableScrollPane = new JScrollPane(table);
-
-        // Tải dữ liệu từ database
-        loadTableData();
-
-        // ======= BUTTONS =======
-        JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnSua = new JButton("Sửa");
-        btnXoa = new JButton("Xóa");
-        btnLamMoi = new JButton("Làm mới");
-
-        panelButtons.add(btnSua);
-        panelButtons.add(btnXoa);
-        panelButtons.add(btnLamMoi);
-
-        // ======= MAIN LAYOUT =======
-        setLayout(new BorderLayout(5, 5));
-        add(panelHeader, BorderLayout.NORTH);
-        add(tableScrollPane, BorderLayout.CENTER);
-        add(panelButtons, BorderLayout.SOUTH);
-
-        // ======= EVENTS =======
-        btnThemMoi.addActionListener(e -> openAddForm());
-        btnTimKiem.addActionListener(e -> searchRecord());
-        btnLamMoi.addActionListener(e -> loadTableData());
-        btnSua.addActionListener(e -> editRecord());
-        btnXoa.addActionListener(e -> deleteRecord());
+        setVisible(true);
     }
 
-    // ======= Kết nối Database =======
-    private void connectDatabase() {
-        try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/qldk_ktx", "root", "#Cccc0903");
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Kết nối cơ sở dữ liệu thất bại!");
-            e.printStackTrace();
-        }
-    }
+    private void initComponents() {
+        setLayout(new BorderLayout());
 
-    // ======= Load Dữ Liệu =======
-    private void loadTableData() {
-        tableModel.setRowCount(0);
-        try {
-            String sql = "SELECT * FROM nhan_vien";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                tableModel.addRow(new Object[]{
-                        rs.getString("id"),
-                        rs.getString("ten_nhan_vien"),
-                        rs.getString("que_quan"),
-                        rs.getString("so_dien_thoai"),
-                        rs.getString("email"),
-                        rs.getTimestamp("ngay_tao"),
-                        rs.getTimestamp("ngay_cap_nhat")
-                });
+        String[] columnNames = { "ID", "Tên nhân viên", "Email", "Số điện thoại", "Ngày tạo", "Vai trò" };
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        };
+
+        table = new JTable(tableModel);
+        table.setRowHeight(30);
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Quản lý danh sách Nhân Viên", JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        topPanel.add(titleLabel, BorderLayout.CENTER);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        addButton = new JButton("Thêm nhân viên");
+        editButton = new JButton("Sửa");
+        deleteButton = new JButton("Xóa");
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        totalLabel = new JLabel("Danh sách này có tổng cộng: 0 bản ghi");
+        prevButton = new JButton("<<");
+        nextButton = new JButton(">>");
+        pageLabel = new JLabel("Trang " + currentPage);
+
+        prevButton.addActionListener(e -> showPage(currentPage - 1));
+        nextButton.addActionListener(e -> showPage(currentPage + 1));
+
+        bottomPanel.add(totalLabel);
+        bottomPanel.add(prevButton);
+        bottomPanel.add(pageLabel);
+        bottomPanel.add(nextButton);
+
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        addButton.addActionListener(e -> addNhanVien());
+        editButton.addActionListener(e -> editNhanVien());
+        deleteButton.addActionListener(e -> deleteNhanVien());
+    }
+
+    private void loadNhanVienData() {
+        dataList = NhanVienDAO.getAllNhanVien();
+        vaiTroList = VaiTroDAO.getAllVaiTro();  // Lấy danh sách vai trò từ cơ sở dữ liệu
+
+        int totalItems = dataList.size();
+        int totalPages = (int) Math.ceil((double) totalItems / rowsPerPage);
+
+        int startIndex = (currentPage - 1) * rowsPerPage;
+        int endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+
+        tableModel.setRowCount(0);
+        for (int i = startIndex; i < endIndex; i++) {
+            NhanVien nv = dataList.get(i);
+            String vaiTro = getVaiTroNameById(nv.getVaiTroId());
+            tableModel.addRow(new Object[] { nv.getId(), nv.getTenNhanVien(), nv.getEmail(), nv.getSoDienThoai(), nv.getNgayTao(), vaiTro });
+        }
+
+        totalLabel.setText("Danh sách này có tổng cộng: " + totalItems + " bản ghi");
+        prevButton.setEnabled(currentPage > 1);
+        nextButton.setEnabled(currentPage < totalPages);
+        pageLabel.setText("Trang " + currentPage);
+    }
+
+    private String getVaiTroNameById(int vaiTroId) {
+        for (VaiTro vt : vaiTroList) {
+            if (vt.getId() == vaiTroId) {
+                return vt.getTenVaiTro();
+            }
+        }
+        return "Không xác định";
+    }
+
+    private void showPage(int page) {
+        if (page > 0) {
+            currentPage = page;
+            loadNhanVienData();
         }
     }
 
-    // ======= Mở Form Thêm Mới =======
-    private void openAddForm() {
-    JDialog addDialog = new JDialog(this, "Thêm Mới Nhân Viên", true);
-    addDialog.setSize(400, 300);
-    addDialog.setLocationRelativeTo(this);
+    private void addNhanVien() {
+        JTextField nameField = new JTextField();
+        JTextField emailField = new JTextField();
+        JTextField phoneField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
 
-    JPanel panelForm = new JPanel(new GridLayout(6, 2, 10, 10));
-    JTextField txtID = new JTextField(); // Thêm trường ID
-    JTextField txtTenNhanVien = new JTextField();
-    JTextField txtQueQuan = new JTextField();
-    JTextField txtSoDienThoai = new JTextField();
-    JTextField txtEmail = new JTextField();
-
-    panelForm.add(new JLabel("Mã Nhân Viên: "));
-    panelForm.add(txtID);  // Cho phép nhập ID thủ công
-    panelForm.add(new JLabel("Tên Nhân Viên: "));
-    panelForm.add(txtTenNhanVien);
-    panelForm.add(new JLabel("Quê Quán: "));
-    panelForm.add(txtQueQuan);
-    panelForm.add(new JLabel("Số Điện Thoại: "));
-    panelForm.add(txtSoDienThoai);
-    panelForm.add(new JLabel("Email: "));
-    panelForm.add(txtEmail);
-
-    JButton btnLuu = new JButton("Lưu");
-    JButton btnHuy = new JButton("Hủy");
-
-    JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    panelButtons.add(btnLuu);
-    panelButtons.add(btnHuy);
-
-    addDialog.setLayout(new BorderLayout(10, 10));
-    addDialog.add(panelForm, BorderLayout.CENTER);
-    addDialog.add(panelButtons, BorderLayout.SOUTH);
-
-    btnLuu.addActionListener(e -> {
-        String id = txtID.getText().trim();
-        if (id.isEmpty()) {
-            JOptionPane.showMessageDialog(addDialog, "Vui lòng nhập mã nhân viên!");
-            return;
+        // Tạo ComboBox với danh sách vai trò từ cơ sở dữ liệu
+        JComboBox<String> roleComboBox = new JComboBox<>();
+        for (VaiTro vt : vaiTroList) {
+            roleComboBox.addItem(vt.getTenVaiTro());
         }
 
-        try {
-            // Kiểm tra xem ID có tồn tại trong cơ sở dữ liệu hay chưa
-            String checkSQL = "SELECT COUNT(*) FROM nhan_vien WHERE id = ?";
-            PreparedStatement psCheck = conn.prepareStatement(checkSQL);
-            psCheck.setString(1, id);
-            ResultSet rs = psCheck.executeQuery();
-            rs.next();
-            int count = rs.getInt(1);
+        JPanel panel = new JPanel(new GridLayout(5, 2));
+        panel.add(new JLabel("Tên nhân viên:"));
+        panel.add(nameField);
+        panel.add(new JLabel("Email:"));
+        panel.add(emailField);
+        panel.add(new JLabel("Số điện thoại:"));
+        panel.add(phoneField);
+        panel.add(new JLabel("Mật khẩu:"));
+        panel.add(passwordField);
+        panel.add(new JLabel("Vai trò:"));
+        panel.add(roleComboBox);
 
-            if (count > 0) {
-                JOptionPane.showMessageDialog(addDialog, "mã đã tồn tại, vui lòng nhập ID khác!");
+        int option = JOptionPane.showConfirmDialog(this, panel, "Thêm Nhân Viên", JOptionPane.OK_CANCEL_OPTION);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String name = nameField.getText();
+            String email = emailField.getText();
+            String phone = phoneField.getText();
+            String password = new String(passwordField.getPassword());
+            String role = (String) roleComboBox.getSelectedItem();
+
+            if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Thông báo", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Thực hiện thêm nhân viên mới
-            String sql = "INSERT INTO nhan_vien (id, ten_nhan_vien, que_quan, so_dien_thoai, email) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, id);
-            ps.setString(2, txtTenNhanVien.getText().trim());
-            ps.setString(3, txtQueQuan.getText().trim());
-            ps.setString(4, txtSoDienThoai.getText().trim());
-            ps.setString(5, txtEmail.getText().trim());
-            ps.executeUpdate();
+            int roleId = getRoleIdByName(role);
 
-            // Thông báo và đóng form
-            JOptionPane.showMessageDialog(addDialog, "Thêm mới thành công!");
-            addDialog.dispose();
-
-            // Tải lại dữ liệu vào bảng
-            loadTableData();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(addDialog, "Lỗi khi thêm dữ liệu: " + ex.getMessage());
-            ex.printStackTrace();
+            NhanVien newNhanVien = new NhanVien(null, name, email, phone, new Timestamp(System.currentTimeMillis()), password, roleId);
+            NhanVienDAO.addNhanVien(newNhanVien);
+            loadNhanVienData();
         }
-    });
+    }
 
-    btnHuy.addActionListener(e -> addDialog.dispose());
-    addDialog.setVisible(true);
+    private int getRoleIdByName(String role) {
+        for (VaiTro vt : vaiTroList) {
+            if (vt.getTenVaiTro().equals(role)) {
+                return vt.getId();
+            }
+        }
+        return 2;  // Default to Nhân viên
+    }
+
+    
+    
+private void editNhanVien() {
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow != -1) {
+        String id = (String) table.getValueAt(selectedRow, 0);
+        NhanVien selectedNhanVien = dataList.stream().filter(nv -> nv.getId().equals(id)).findFirst().orElse(null);
+
+        if (selectedNhanVien != null) {
+            JTextField nameField = new JTextField(selectedNhanVien.getTenNhanVien());
+            JTextField emailField = new JTextField(selectedNhanVien.getEmail());
+            JTextField phoneField = new JTextField(selectedNhanVien.getSoDienThoai());
+            JPasswordField passwordField = new JPasswordField("");  // Start with an empty password
+
+            JComboBox<String> roleComboBox = new JComboBox<>();
+            for (VaiTro vt : vaiTroList) {
+                roleComboBox.addItem(vt.getTenVaiTro());
+            }
+            roleComboBox.setSelectedItem(getVaiTroNameById(selectedNhanVien.getVaiTroId()));
+
+            JPanel panel = new JPanel(new GridLayout(5, 2));
+            panel.add(new JLabel("Tên nhân viên:"));
+            panel.add(nameField);
+            panel.add(new JLabel("Email:"));
+            panel.add(emailField);
+            panel.add(new JLabel("Số điện thoại:"));
+            panel.add(phoneField);
+            panel.add(new JLabel("Vai trò:"));
+            panel.add(roleComboBox);
+
+            int option = JOptionPane.showConfirmDialog(this, panel, "Sửa Nhân Viên", JOptionPane.OK_CANCEL_OPTION);
+
+            if (option == JOptionPane.OK_OPTION) {
+                String name = nameField.getText();
+                String email = emailField.getText();
+                String phone = phoneField.getText();
+                String password = new String(passwordField.getPassword());  // Get password input
+                String role = (String) roleComboBox.getSelectedItem();
+
+                if (name.isEmpty() || email.isEmpty() || phone.isEmpty() ||  !selectedNhanVien.getMatKhau().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int roleId = getRoleIdByName(role);
+
+                selectedNhanVien.setTenNhanVien(name);
+                selectedNhanVien.setEmail(email);
+                selectedNhanVien.setSoDienThoai(phone);
+
+                // Only update password if a new one is provided
+                if (!password.isEmpty()) {
+                    selectedNhanVien.setMatKhau(password);
+                } else {
+                    // Retain the existing password if the field is left empty
+                    selectedNhanVien.setMatKhau(selectedNhanVien.getMatKhau());
+                }
+
+                selectedNhanVien.setVaiTroId(roleId);
+
+                NhanVienDAO.updateNhanVien(selectedNhanVien);  // Update the employee details
+                loadNhanVienData();  // Reload employee data to reflect changes
+            }
+        }
+    }
 }
-    // ======= Tìm Kiếm Dữ Liệu =======
-    private void searchRecord() {
-        String keyword = txtTimKiem.getText().trim().toLowerCase();
-        tableModel.setRowCount(0);
-        try {
-            String sql = "SELECT * FROM nhan_vien WHERE LOWER(ten_nhan_vien) LIKE ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, "%" + keyword + "%");
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                tableModel.addRow(new Object[]{
-                        rs.getString("id"),
-                        rs.getString("ten_nhan_vien"),
-                        rs.getString("que_quan"),
-                        rs.getString("so_dien_thoai"),
-                        rs.getString("email"),
-                        rs.getTimestamp("ngay_tao"),
-                        rs.getTimestamp("ngay_cap_nhat")
-                });
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tìm kiếm: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // ======= Sửa Dữ Liệu =======
-    private void editRecord() {
+ 
+    
+    private void deleteNhanVien() {
         int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa.");
-            return;
-        }
-
-        String selectedId = (String) tableModel.getValueAt(selectedRow, 0);
-        JDialog editDialog = new JDialog(this, "Sửa Nhân Viên", true);
-        editDialog.setSize(400, 300);
-        editDialog.setLocationRelativeTo(this);
-
-        JPanel panelForm = new JPanel(new GridLayout(5, 2, 10, 10));
-        JTextField txtTenNhanVien = new JTextField(tableModel.getValueAt(selectedRow, 1).toString());
-        JTextField txtQueQuan = new JTextField(tableModel.getValueAt(selectedRow, 2).toString());
-        JTextField txtSoDienThoai = new JTextField(tableModel.getValueAt(selectedRow, 3).toString());
-        JTextField txtEmail = new JTextField(tableModel.getValueAt(selectedRow, 4).toString());
-
-        panelForm.add(new JLabel("Tên Nhân Viên: "));
-        panelForm.add(txtTenNhanVien);
-        panelForm.add(new JLabel("Quê Quán: "));
-        panelForm.add(txtQueQuan);
-        panelForm.add(new JLabel("Số Điện Thoại: "));
-        panelForm.add(txtSoDienThoai);
-        panelForm.add(new JLabel("Email: "));
-        panelForm.add(txtEmail);
-
-        JButton btnLuu = new JButton("Lưu");
-        JButton btnHuy = new JButton("Hủy");
-
-        JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelButtons.add(btnLuu);
-        panelButtons.add(btnHuy);
-
-        editDialog.setLayout(new BorderLayout(10, 10));
-        editDialog.add(panelForm, BorderLayout.CENTER);
-        editDialog.add(panelButtons, BorderLayout.SOUTH);
-
-        btnLuu.addActionListener(e -> {
-            try {
-                String sql = "UPDATE nhan_vien SET ten_nhan_vien = ?, que_quan = ?, so_dien_thoai = ?, email = ? WHERE id = ?";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, txtTenNhanVien.getText().trim());
-                ps.setString(2, txtQueQuan.getText().trim());
-                ps.setString(3, txtSoDienThoai.getText().trim());
-                ps.setString(4, txtEmail.getText().trim());
-                ps.setString(5, selectedId);
-                ps.executeUpdate();
-                JOptionPane.showMessageDialog(editDialog, "Cập nhật thành công!");
-                editDialog.dispose();
-                loadTableData();
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(editDialog, "Lỗi khi cập nhật dữ liệu: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        });
-
-        btnHuy.addActionListener(e -> editDialog.dispose());
-        editDialog.setVisible(true);
-    }
-
-    // ======= Xóa Dữ Liệu =======
-    private void deleteRecord() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để xóa.");
-            return;
-        }
-
-        String selectedId = (String) tableModel.getValueAt(selectedRow, 0);
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa nhân viên này?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                String sql = "DELETE FROM nhan_vien WHERE id = ?";
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setString(1, selectedId);
-                ps.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                loadTableData();
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi xóa dữ liệu: " + e.getMessage());
-                e.printStackTrace();
-            }
+        if (selectedRow != -1) {
+            String id = (String) table.getValueAt(selectedRow, 0);
+            NhanVienDAO.deleteNhanVien(id);
+            loadNhanVienData();
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            QL_NhanVien frame = new QL_NhanVien();
-            frame.setVisible(true);
-        });
+        SwingUtilities.invokeLater(QL_NhanVien::new);
     }
 }

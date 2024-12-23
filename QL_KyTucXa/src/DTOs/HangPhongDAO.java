@@ -1,135 +1,32 @@
 package DTOs;
 
-import Data.HangPhong;
-import Data.TienNghi;
 import Data.DatabaseConnection;
-import DTOs.TrangThaiHangPhong;
-
+import Data.HangPhong;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HangPhongDAO {
 
-    // Phương thức kết nối với cơ sở dữ liệu
-    private static Connection getConnection() throws SQLException {
-        return DatabaseConnection.getConnection();
-    }
-
-
-
-public static void addHangPhong(HangPhong hangPhong, List<TienNghi> selectedTienNghi, List<String> moTaList, List<Integer> soLuongList) {
-    String query = "INSERT INTO hang_phong (name, gia, mo_ta, trang_thai, so_luong_sv) VALUES (?, ?, ?, ?, ?)";
-    try (Connection conn = getConnection();
-         PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
-        // Set giá trị vào PreparedStatement
-        ps.setString(1, hangPhong.getName());
-        ps.setFloat(2, hangPhong.getGia());
-        ps.setString(3, hangPhong.getMoTa());
-        ps.setInt(4, hangPhong.getTrangThai().getValue());
-        ps.setInt(5, hangPhong.getSoLuongSV());
-
-        // Thực hiện câu lệnh
-        ps.executeUpdate();
-
-        // Lấy ID của hạng phòng mới thêm vào
-        ResultSet generatedKeys = ps.getGeneratedKeys();
-        if (generatedKeys.next()) {
-            int hangPhongId = generatedKeys.getInt(1);
-
-            // Thêm tiện nghi vào bảng tien_nghi_phong
-            for (int i = 0; i < selectedTienNghi.size(); i++) {
-                TienNghi tienNghi = selectedTienNghi.get(i);
-                String moTa = moTaList.get(i); // Retrieve the corresponding moTa for each TienNghi
-                int soLuong = soLuongList.get(i); // Get the corresponding quantity
-                addTienNghiToHangPhong(hangPhongId, tienNghi, soLuong, moTa);
-            }
-        }
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-}
-
-public static void addTienNghiToHangPhong(int hangPhongId, TienNghi tienNghi, int soLuong, String moTa) {
-    String query = "INSERT INTO tien_nghi_phong (id_tien_nghi, id_hang_phong, name, so_luong, mo_ta) VALUES (?, ?, ?, ?, ?)";
-    try (Connection conn = getConnection();
-         PreparedStatement ps = conn.prepareStatement(query)) {
-
-        ps.setInt(1, tienNghi.getId());
-        ps.setInt(2, hangPhongId);
-        ps.setString(3, tienNghi.getName());
-        ps.setInt(4, soLuong);
-        ps.setString(5, moTa);
-
-        ps.executeUpdate();
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-}
-
-
-
-    // Phương thức sửa Hạng Phòng
-    public static boolean updateHangPhong(int id, String name, float gia, String moTa, TrangThaiHangPhong trangThai, int soLuongSV) {
-        String query = "UPDATE hang_phong SET name = ?, gia = ?, mo_ta = ?, trang_thai = ?, so_luong_sv = ?, ngay_cap_nhat = NOW() WHERE id = ?";
-
-        try (Connection conn = getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(query)) {
-
-            ps.setString(1, name);
-            ps.setFloat(2, gia);
-            ps.setString(3, moTa);
-            ps.setInt(4, trangThai.getValue()); // Sử dụng giá trị từ enum
-            ps.setInt(5, soLuongSV);
-            ps.setInt(6, id);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Phương thức xóa Hạng Phòng
-    public static boolean deleteHangPhong(int id) {
-        String query = "DELETE FROM hang_phong WHERE id = ?";
-
-        try (Connection conn = getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(query)) {
-
-            ps.setInt(1, id);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
- // Phương thức lấy tất cả các Hạng Phòng
+    // Get all 'hang_phong' records from the database
     public static List<HangPhong> getAllHangPhong() {
         List<HangPhong> hangPhongList = new ArrayList<>();
         String query = "SELECT * FROM hang_phong";
 
-        try (Connection conn = getConnection(); 
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
 
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                float gia = rs.getFloat("gia");
-                String moTa = rs.getString("mo_ta");
-                int trangThaiValue = rs.getInt("trang_thai");
-                TrangThaiHangPhong trangThai = TrangThaiHangPhong.fromValue(trangThaiValue); // Chuyển từ giá trị sang enum
-                int soLuongSV = rs.getInt("so_luong_sv");
-                Timestamp ngayTao = rs.getTimestamp("ngay_tao");
-                Timestamp ngayCapNhat = rs.getTimestamp("ngay_cap_nhat");
-
-                HangPhong hangPhong = new HangPhong(id, name, gia, moTa, trangThai, soLuongSV, ngayTao, ngayCapNhat);
+            while (resultSet.next()) {
+                HangPhong hangPhong = new HangPhong();
+                hangPhong.setId(resultSet.getInt("id"));
+                hangPhong.setName(resultSet.getString("name"));
+                hangPhong.setSoLuongSV(resultSet.getInt("so_luong_sv"));
+                hangPhong.setGia(resultSet.getFloat("gia"));
+                hangPhong.setMoTa(resultSet.getString("mo_ta"));
+                hangPhong.setTrangThai(resultSet.getInt("trang_thai"));
+                hangPhong.setNgayTao(resultSet.getTimestamp("ngay_tao"));
+                hangPhong.setNgayCapNhat(resultSet.getTimestamp("ngay_cap_nhat"));
                 hangPhongList.add(hangPhong);
             }
         } catch (SQLException e) {
@@ -137,35 +34,101 @@ public static void addTienNghiToHangPhong(int hangPhongId, TienNghi tienNghi, in
         }
         return hangPhongList;
     }
-    
-    
- // Phương thức lấy Hạng Phòng theo ID
-    public static HangPhong getHangPhongById(int id) {
-        String query = "SELECT * FROM hang_phong WHERE id = ?";
-        HangPhong hangPhong = null;
 
-        try (Connection conn = getConnection(); 
+    // Add a new 'hang_phong' record to the database
+    public static boolean addHangPhong(HangPhong hangPhong) {
+        String query = "INSERT INTO hang_phong (name, mo_ta, trang_thai, so_luong_sv, gia, ngay_tao, ngay_cap_nhat) " +
+                       "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, hangPhong.getName());
+            statement.setString(2, hangPhong.getMoTa());
+            statement.setInt(3, hangPhong.getTrangThai());
+            statement.setInt(4, hangPhong.getSoLuongSV());
+            statement.setFloat(5, hangPhong.getGia());
+            statement.setTimestamp(6, new Timestamp(hangPhong.getNgayTao().getTime()));
+            statement.setTimestamp(7, new Timestamp(hangPhong.getNgayCapNhat().getTime()));
+
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Update an existing 'hang_phong' record in the database
+    public static boolean updateHangPhong(HangPhong hangPhong) {
+        String query = "UPDATE hang_phong SET name = ?, mo_ta = ?, trang_thai = ?, so_luong_sv = ?, gia = ?, " +
+                       "ngay_tao = ?, ngay_cap_nhat = ? WHERE id = ?";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, hangPhong.getName());
+            statement.setString(2, hangPhong.getMoTa());
+            statement.setInt(3, hangPhong.getTrangThai());
+            statement.setInt(4, hangPhong.getSoLuongSV());
+            statement.setFloat(5, hangPhong.getGia());
+            statement.setTimestamp(6, new Timestamp(hangPhong.getNgayTao().getTime()));
+            statement.setTimestamp(7, new Timestamp(hangPhong.getNgayCapNhat().getTime()));
+            statement.setInt(8, hangPhong.getId());
+
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public static boolean canDeleteHangPhong(int hangPhongId) {
+        String query = "SELECT COUNT(*) FROM phong WHERE id_hang_phong = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
-
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String name = rs.getString("name");
-                    float gia = rs.getFloat("gia");
-                    String moTa = rs.getString("mo_ta");
-                    int trangThaiValue = rs.getInt("trang_thai");
-                    TrangThaiHangPhong trangThai = TrangThaiHangPhong.fromValue(trangThaiValue); // Chuyển từ giá trị sang enum
-                    int soLuongSV = rs.getInt("so_luong_sv");
-                    Timestamp ngayTao = rs.getTimestamp("ngay_tao");
-                    Timestamp ngayCapNhat = rs.getTimestamp("ngay_cap_nhat");
-
-                    hangPhong = new HangPhong(id, name, gia, moTa, trangThai, soLuongSV, ngayTao, ngayCapNhat);
-                }
+            ps.setInt(1, hangPhongId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) == 0; // Chỉ cho phép xóa nếu không có phòng con
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return hangPhong;
+        return false;
+    }
+
+    
+
+    // Delete a 'hang_phong' record from the database
+    public static boolean deleteHangPhong(int hangPhongId) {
+        String deleteTienNghiPhongQuery = "DELETE FROM tien_nghi_phong WHERE id_hang_phong = ?";
+        String deleteHangPhongQuery = "DELETE FROM hang_phong WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false); // Bắt đầu transaction
+
+            try (PreparedStatement ps1 = conn.prepareStatement(deleteTienNghiPhongQuery);
+                 PreparedStatement ps2 = conn.prepareStatement(deleteHangPhongQuery)) {
+
+                // Xóa các tiện nghi liên quan
+                ps1.setInt(1, hangPhongId);
+                ps1.executeUpdate();
+
+                // Xóa hạng phòng
+                ps2.setInt(1, hangPhongId);
+                ps2.executeUpdate();
+
+                conn.commit(); // Commit transaction
+                return true;
+            } catch (SQLException e) {
+                conn.rollback(); // Rollback nếu có lỗi
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
 }
