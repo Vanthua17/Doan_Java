@@ -7,7 +7,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 
-/// t s x ok!!!
 public class QL_KhuVuc extends JFrame {
     private JTextField txtTimKiem;
     private JButton btnTimKiem, btnLamMoi;
@@ -15,9 +14,14 @@ public class QL_KhuVuc extends JFrame {
     private DefaultTableModel tableModel;
     private Connection conn;
 
+    // Phân trang
+    private int currentPage = 1;
+    private int rowsPerPage = 10;
+    private int totalPages;
+
     public QL_KhuVuc() {
         setTitle("Quản Lý Khu Vực");
-        setSize(700, 500);
+        setSize(800, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -25,44 +29,52 @@ public class QL_KhuVuc extends JFrame {
         connectDatabase();
 
         // ======= PANEL HEADER =======
-        JPanel panelHeader = new JPanel(new BorderLayout());
+        JPanel panelHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+
+        // ======= BUTTONS THÊM, SỬA, XÓA, LÀM MỚI =======
         JButton btnThemMoi = new JButton("+ Thêm mới khu vực");
-        btnThemMoi.setForeground(Color.WHITE);
-        btnThemMoi.setBackground(new Color(33, 150, 243));
+        JButton btnSua = new JButton("Sửa");
+        JButton btnXoa = new JButton("Xóa");
+        btnLamMoi = new JButton("Làm mới");
+
+        // ======= Tìm kiếm =======
         txtTimKiem = new JTextField(20);
         btnTimKiem = new JButton("Tìm Kiếm");
 
-        JPanel panelSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        panelSearch.add(txtTimKiem);
-        panelSearch.add(btnTimKiem);
+        // Thêm tất cả vào panelHeader (một hàng duy nhất)
+        panelHeader.add(btnThemMoi);
+        panelHeader.add(btnSua);
+        panelHeader.add(btnXoa);
+        panelHeader.add(btnLamMoi);
+        panelHeader.add(txtTimKiem);
+        panelHeader.add(btnTimKiem);  // Thêm btnTimKiem vào panel
 
-        panelHeader.add(btnThemMoi, BorderLayout.WEST);
-        panelHeader.add(panelSearch, BorderLayout.EAST);
+        // ======= BUTTONS PHÂN TRANG =======
+        JButton btnFirstPage = new JButton("Trang đầu");
+        JButton btnPrevPage = new JButton("<<");
+        JButton btnNextPage = new JButton(">>");
+        JLabel lblPageInfo = new JLabel("Trang: " + currentPage);
+
+        JPanel panelPagination = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panelPagination.add(btnFirstPage);
+        panelPagination.add(btnPrevPage);
+        panelPagination.add(lblPageInfo);
+        panelPagination.add(btnNextPage);
 
         // ======= TABLE =======
-        tableModel = new DefaultTableModel(new String[]{"ID","Tên Khu Vực", "Vị Trí", "Mô Tả", "Ngày Tạo", "Ngày Cập Nhật"}, 0);
+        tableModel = new DefaultTableModel(new String[]{"STT", "ID", "Tên Khu Vực", "Vị Trí", "Mô Tả", "Ngày Tạo", "Ngày Cập Nhật"}, 0);
         table = new JTable(tableModel);
         JScrollPane tableScrollPane = new JScrollPane(table);
 
         // Load dữ liệu
         loadTableData();
-        hideColumn(0);
-
-        // ======= BUTTONS =======
-        JPanel panelButtons = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnSua = new JButton("Sửa");
-        JButton btnXoa = new JButton("Xóa");
-        btnLamMoi = new JButton("Làm mới");
-
-        panelButtons.add(btnSua);
-        panelButtons.add(btnXoa);
-        panelButtons.add(btnLamMoi);
+        hideColumn(1); // Ẩn cột ID
 
         // ======= MAIN LAYOUT =======
         setLayout(new BorderLayout(5, 5));
-        add(panelHeader, BorderLayout.NORTH);
+        add(panelHeader, BorderLayout.NORTH);  // Đặt panelHeader lên đầu tiên
         add(tableScrollPane, BorderLayout.CENTER);
-        add(panelButtons, BorderLayout.SOUTH);
+        add(panelPagination, BorderLayout.SOUTH); // Đặt panelPagination ở phía dưới
 
         // ======= EVENTS =======
         btnThemMoi.addActionListener(e -> openAddOrEditForm(null));
@@ -70,13 +82,37 @@ public class QL_KhuVuc extends JFrame {
         btnXoa.addActionListener(e -> deleteSelectedRow());
         btnLamMoi.addActionListener(e -> loadTableData());
         btnTimKiem.addActionListener(e -> searchRecord());
+
+        // Sự kiện phân trang
+        btnPrevPage.addActionListener(e -> {
+            if (currentPage > 1) {  // Nếu không phải trang 1
+                currentPage--;  // Giảm số trang khi nhấn "Prev"
+                lblPageInfo.setText("Trang: " + currentPage);  // Cập nhật số trang trên giao diện
+                loadTableData();  // Tải lại dữ liệu của trang mới
+            }
+        });
+
+        btnNextPage.addActionListener(e -> {
+            if (currentPage < totalPages) {  // Nếu không phải trang cuối
+                currentPage++;  // Tăng số trang khi nhấn "Next"
+                lblPageInfo.setText("Trang: " + currentPage);  // Cập nhật số trang trên giao diện
+                loadTableData();  // Tải lại dữ liệu của trang mới
+            }
+        });
+        
+        btnFirstPage.addActionListener(e -> {
+            currentPage = 1;  // Đặt lại trang về 1
+            lblPageInfo.setText("Trang: " + currentPage);  // Cập nhật số trang trên giao diện
+            loadTableData();  // Tải lại dữ liệu của trang 1
+        });
     }
+
     // ======= Ẩn Cột =======
     private void hideColumn(int columnIndex) {
         TableColumnModel columnModel = table.getColumnModel();
         columnModel.removeColumn(columnModel.getColumn(columnIndex));
     }
-    
+
     // ======= Kết nối Database =======
     private void connectDatabase() {
         try {
@@ -90,25 +126,42 @@ public class QL_KhuVuc extends JFrame {
     // ======= Load Dữ Liệu =======
     private void loadTableData() {
         tableModel.setRowCount(0); // Xóa toàn bộ dữ liệu cũ trong bảng
+
         try {
-            String sql = "SELECT * FROM khu_vuc";
+            // Tính tổng số bản ghi
+            String countSql = "SELECT COUNT(*) FROM khu_vuc";
+            PreparedStatement countPs = conn.prepareStatement(countSql);
+            ResultSet countRs = countPs.executeQuery();
+            if (countRs.next()) {
+                int totalRecords = countRs.getInt(1);
+                totalPages = (int) Math.ceil((double) totalRecords / rowsPerPage);  // Tính tổng số trang
+            }
+
+            // Lấy dữ liệu của trang hiện tại
+            String sql = "SELECT * FROM khu_vuc LIMIT ? OFFSET ?";
             PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, rowsPerPage);  // Giới hạn số bản ghi mỗi trang
+            ps.setInt(2, (currentPage - 1) * rowsPerPage);  // Tính OFFSET dựa trên trang hiện tại
+
             ResultSet rs = ps.executeQuery();
+            int stt = (currentPage - 1) * rowsPerPage + 1;  // Tính số thứ tự bắt đầu từ trang hiện tại
+
             while (rs.next()) {
                 tableModel.addRow(new Object[]{
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("vi_tri"),
-                        rs.getString("mo_ta"),
-                        rs.getTimestamp("ngay_tao"),
-                        rs.getTimestamp("ngay_cap_nhat")
+                    stt++,  // Số thứ tự
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("vi_tri"),
+                    rs.getString("mo_ta"),
+                    rs.getTimestamp("ngay_tao"),
+                    rs.getTimestamp("ngay_cap_nhat")
                 });
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Lỗi tải dữ liệu: " + e.getMessage());
         }
     }
-    
+
     // ======= Mở Form Thêm/Sửa =======
     private void openAddOrEditForm(Integer selectedId) {
         JDialog dialog = new JDialog(this, selectedId == null ? "Thêm Mới Khu Vực" : "Cập Nhật Khu Vực", true);
@@ -139,23 +192,36 @@ public class QL_KhuVuc extends JFrame {
 
         // Nếu là sửa, điền thông tin hiện có
         if (selectedId != null) {
-            int row = table.getSelectedRow();
-            txtName.setText(tableModel.getValueAt(row, 1).toString());
-            txtViTri.setText(tableModel.getValueAt(row, 2).toString());
-            txtMoTa.setText(tableModel.getValueAt(row, 3).toString());
+            try {
+                String sql = "SELECT * FROM khu_vuc WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, selectedId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    txtName.setText(rs.getString("name"));
+                    txtViTri.setText(rs.getString("vi_tri"));
+                    txtMoTa.setText(rs.getString("mo_ta"));
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi: " + e.getMessage());
+            }
         }
 
-        // Sự kiện nút Lưu
         btnLuu.addActionListener(e -> {
             try {
-                String sql = selectedId == null
-                        ? "INSERT INTO khu_vuc (name, vi_tri, mo_ta) VALUES (?, ?, ?)"
-                        : "UPDATE khu_vuc SET name = ?, vi_tri = ?, mo_ta = ? WHERE id = ?";
-                PreparedStatement ps = conn.prepareStatement(sql);
+                String sql;
+                PreparedStatement ps;
+                if (selectedId == null) {  // Thêm mới
+                    sql = "INSERT INTO khu_vuc (name, vi_tri, mo_ta) VALUES (?, ?, ?)";
+                    ps = conn.prepareStatement(sql);
+                } else {  // Sửa
+                    sql = "UPDATE khu_vuc SET name = ?, vi_tri = ?, mo_ta = ? WHERE id = ?";
+                    ps = conn.prepareStatement(sql);
+                    ps.setInt(4, selectedId);
+                }
                 ps.setString(1, txtName.getText());
                 ps.setString(2, txtViTri.getText());
                 ps.setString(3, txtMoTa.getText());
-                if (selectedId != null) ps.setInt(4, selectedId);
                 ps.executeUpdate();
                 JOptionPane.showMessageDialog(dialog, "Lưu thành công!");
                 dialog.dispose();
@@ -170,102 +236,68 @@ public class QL_KhuVuc extends JFrame {
         dialog.setVisible(true);
     }
 
- // ======= Cập nhật hàm Sửa =======
+    // ======= Cập nhật hàm Sửa =======
     private void editSelectedRow() {
         int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để sửa.");
-            return;
+        if (selectedRow != -1) {
+            Integer selectedId = (Integer) tableModel.getValueAt(selectedRow, 1);
+            openAddOrEditForm(selectedId);
+        } else {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn khu vực để sửa.");
         }
-
-        // Lấy ID từ dòng được chọn (ẩn trong cột đầu tiên)
-        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
-
-        // Mở form thêm/sửa với ID đã chọn
-        openAddOrEditForm(id);
     }
-    
- // ======= Cập nhật hàm Xóa =======
+
+    // ======= Xóa Dữ Liệu =======
     private void deleteSelectedRow() {
         int selectedRow = table.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một dòng để xóa.");
-            return;
+        if (selectedRow != -1) {
+            int selectedId = (Integer) tableModel.getValueAt(selectedRow, 1);
+            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa khu vực này?", "Xóa khu vực", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    String sql = "DELETE FROM khu_vuc WHERE id = ?";
+                    PreparedStatement ps = conn.prepareStatement(sql);
+                    ps.setInt(1, selectedId);
+                    ps.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                    loadTableData();
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + e.getMessage());
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn khu vực để xóa.");
         }
+    }
 
-        // Lấy ID từ dòng được chọn
-        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
-
-        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa khu vực này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+    // ======= Tìm Kiếm =======
+    private void searchRecord() {
+        String keyword = txtTimKiem.getText().trim();
+        if (!keyword.isEmpty()) {
             try {
-                String sql = "DELETE FROM khu_vuc WHERE id = ?";
+                String sql = "SELECT * FROM khu_vuc WHERE name LIKE ? OR vi_tri LIKE ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
-                ps.setInt(1, id);
-                ps.executeUpdate();
-
-                JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                loadTableData();
+                ps.setString(1, "%" + keyword + "%");
+                ps.setString(2, "%" + keyword + "%");
+                ResultSet rs = ps.executeQuery();
+                tableModel.setRowCount(0);
+                while (rs.next()) {
+                    tableModel.addRow(new Object[] {
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("vi_tri"),
+                            rs.getString("mo_ta"),
+                            rs.getTimestamp("ngay_tao"),
+                            rs.getTimestamp("ngay_cap_nhat")
+                    });
+                }
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Lỗi tìm kiếm: " + e.getMessage());
             }
+        } else {
+            loadTableData();
         }
     }
-    
- // ======= Cập nhật hàm Làm mới =======
-    
-    
-    //=========== tìm kiếm =================
- private void searchRecord() {
-    // Lấy từ khóa tìm kiếm từ ô nhập liệu
-    String keyword = txtTimKiem.getText().trim();
-
-    // Kiểm tra nếu từ khóa rỗng
-    if (keyword.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Vui lòng nhập từ khóa tìm kiếm.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-
-    // Xóa dữ liệu cũ trong bảng
-    tableModel.setRowCount(0);
-
-    // Chuẩn bị câu lệnh SQL
-    String sql = "SELECT * FROM khu_vuc WHERE name LIKE ? OR vi_tri LIKE ? OR mo_ta LIKE ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        // Thiết lập tham số cho câu lệnh SQL
-        String searchPattern = "%" + keyword + "%";
-        ps.setString(1, searchPattern);
-        ps.setString(2, searchPattern);
-        ps.setString(3, searchPattern);
-
-        // Thực thi truy vấn
-        try (ResultSet rs = ps.executeQuery()) {
-            boolean hasResults = false;
-
-            // Duyệt qua kết quả truy vấn và thêm vào bảng
-            while (rs.next()) {
-                hasResults = true;
-                tableModel.addRow(new Object[]{
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("vi_tri"),
-                        rs.getString("mo_ta"),
-                        rs.getTimestamp("ngay_tao"),
-                        rs.getTimestamp("ngay_cap_nhat")
-                });
-            }
-
-            // Hiển thị thông báo nếu không có kết quả
-            if (!hasResults) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả nào.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            }
-        }
-    } catch (SQLException e) {
-        // Xử lý lỗi SQL
-        JOptionPane.showMessageDialog(this, "Lỗi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        e.printStackTrace(); // Debug lỗi SQL
-    }
-}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new QL_KhuVuc().setVisible(true));
