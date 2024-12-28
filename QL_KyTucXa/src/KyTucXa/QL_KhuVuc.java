@@ -249,26 +249,32 @@ public class QL_KhuVuc extends JFrame {
 
     // ======= Xóa Dữ Liệu =======
     private void deleteSelectedRow() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow != -1) {
-            int selectedId = (Integer) tableModel.getValueAt(selectedRow, 1);
-            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa khu vực này?", "Xóa khu vực", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    String sql = "DELETE FROM khu_vuc WHERE id = ?";
-                    PreparedStatement ps = conn.prepareStatement(sql);
-                    ps.setInt(1, selectedId);
-                    ps.executeUpdate();
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow != -1) {
+        int selectedId = (Integer) tableModel.getValueAt(selectedRow, 1);
+        System.out.println("Selected ID: " + selectedId); // Kiểm tra ID
+        int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa khu vực này?", "Xóa khu vực", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                String sql = "DELETE FROM khu_vuc WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, selectedId);
+                int rowsAffected = ps.executeUpdate();
+                System.out.println("Rows affected: " + rowsAffected); // Kiểm tra số bản ghi bị ảnh hưởng
+                if (rowsAffected > 0) {
                     JOptionPane.showMessageDialog(this, "Xóa thành công!");
-                    loadTableData();
-                } catch (SQLException e) {
-                    JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + e.getMessage());
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy bản ghi để xóa.");
                 }
+                loadTableData();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Lỗi xóa dữ liệu: " + e.getMessage());
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn khu vực để xóa.");
         }
+    } else {
+        JOptionPane.showMessageDialog(this, "Vui lòng chọn khu vực để xóa.");
     }
+}
 
     // ======= Tìm Kiếm =======
     private void searchRecord() {
