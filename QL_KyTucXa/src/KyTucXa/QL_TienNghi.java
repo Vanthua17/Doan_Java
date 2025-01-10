@@ -27,9 +27,9 @@
 	        loadTienNghiData();  // Load the first page data
 	        
 	        setSize(800, 500);
-	        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	        setLocationRelativeTo(null);
+	        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	        setVisible(true);
+	        setLocationRelativeTo(null);
 	    }
 
 	    private void initComponents() {

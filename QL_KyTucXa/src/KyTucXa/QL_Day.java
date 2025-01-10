@@ -91,6 +91,8 @@ public class QL_Day extends JFrame {
     btnPrev.addActionListener(e -> loadTableData(currentPage - 1));
     btnNext.addActionListener(e -> loadTableData(currentPage + 1));
     btnLast.addActionListener(e -> loadTableData(getTotalPages()));
+    setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    setVisible(true);
 }
 
     // ======= Kết nối Database =======

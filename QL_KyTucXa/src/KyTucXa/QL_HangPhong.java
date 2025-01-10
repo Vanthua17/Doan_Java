@@ -35,7 +35,10 @@ public class QL_HangPhong extends JFrame {
 		setSize(800, 500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
-		setVisible(true);
+		//setVisible(true);
+		
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    setVisible(true);
 	}
 
 	private void initComponents() {

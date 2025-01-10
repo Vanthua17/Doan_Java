@@ -21,7 +21,6 @@ public class QL_Phong extends JFrame {
     public QL_Phong() {
         setTitle("Quản Lý Phòng");
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         connectDatabase();
@@ -109,6 +108,9 @@ public class QL_Phong extends JFrame {
             lblPageInfo.setText("Trang: " + currentPage);  // Cập nhật số trang trên giao diện
             loadTableData();  // Tải lại dữ liệu của trang 1
         });
+        
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
     }
 
     private void connectDatabase() {

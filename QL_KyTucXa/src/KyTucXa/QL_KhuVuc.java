@@ -105,6 +105,9 @@ public class QL_KhuVuc extends JFrame {
             lblPageInfo.setText("Trang: " + currentPage);  // Cập nhật số trang trên giao diện
             loadTableData();  // Tải lại dữ liệu của trang 1
         });
+        
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
     }
 
     // ======= Ẩn Cột =======

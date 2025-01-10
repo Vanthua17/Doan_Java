@@ -103,6 +103,9 @@ public class QL_Lop extends JFrame {
                 System.out.println("Trang hiện tại: " + currentPage); // Kiểm tra giá trị
             }
         });
+        
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
     }
 
     // ======= Kết nối Database =======

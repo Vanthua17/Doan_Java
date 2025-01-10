@@ -17,7 +17,8 @@ public class QL_SinhVien extends JFrame {
     public QL_SinhVien() {
         setTitle("Quản Lý Sinh Viên");
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
         setLocationRelativeTo(null);
 
         // Kết nối cơ sở dữ liệu

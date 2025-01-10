@@ -22,6 +22,18 @@ public class NhanVien {
         this.matKhau = matKhau;
         this.vaiTroId = vaiTroId;
     }
+    
+    // them vao de lay email, mk dang nhap
+    public NhanVien(String email, String matKhau) {
+        this.email = email;
+        this.matKhau = matKhau;
+    }
+    
+ // Getter và Setter
+   
+    public String getPassWord() {
+        return matKhau;
+    }
 
     // Getter and Setter Methods
     public String getId() {

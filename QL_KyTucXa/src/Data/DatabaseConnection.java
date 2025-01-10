@@ -2,6 +2,8 @@ package Data;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,5 +34,30 @@ public class DatabaseConnection {
 	    public static void main(String[] args) {
 	        System.out.println("Hello World!");
 	        getConnection();
+	    }
+	    
+	    
+	    // moi them 2 cai cuoi
+	    
+	    
+	    
+	    // Phương thức đóng các tài nguyên
+	    public static void closeResources(Connection conn, PreparedStatement ps, ResultSet rs) {
+	        try {
+	            if (rs != null) rs.close();
+	            if (ps != null) ps.close();
+	            if (conn != null) conn.close();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }
+
+	    public static void closeResources(Connection conn, PreparedStatement ps) {
+	        try {
+	            if (ps != null) ps.close();
+	            if (conn != null) conn.close();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
 	    }
 }

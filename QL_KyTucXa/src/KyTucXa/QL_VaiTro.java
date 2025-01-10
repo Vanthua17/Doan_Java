@@ -33,9 +33,9 @@ public class QL_VaiTro extends JFrame {
         loadVaiTroData();
 
         setSize(800, 500);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
+        setLocationRelativeTo(null);
     }
 
     private void initComponents() {

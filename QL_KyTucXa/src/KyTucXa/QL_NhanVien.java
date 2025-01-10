@@ -30,9 +30,9 @@ public class QL_NhanVien extends JFrame {
         loadNhanVienData();
 
         setSize(800, 500);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
+        setLocationRelativeTo(null);
     }
 
     private void initComponents() {
@@ -133,50 +133,62 @@ public class QL_NhanVien extends JFrame {
     }
 
     private void addNhanVien() {
-        JTextField nameField = new JTextField();
-        JTextField emailField = new JTextField();
-        JTextField phoneField = new JTextField();
-        JPasswordField passwordField = new JPasswordField();
+    JTextField nameField = new JTextField();
+    JTextField emailField = new JTextField();
+    JTextField phoneField = new JTextField();
+    JPasswordField passwordField = new JPasswordField();
 
-        // Tạo ComboBox với danh sách vai trò từ cơ sở dữ liệu
-        JComboBox<String> roleComboBox = new JComboBox<>();
-        for (VaiTro vt : vaiTroList) {
-            roleComboBox.addItem(vt.getTenVaiTro());
-        }
-
-        JPanel panel = new JPanel(new GridLayout(5, 2));
-        panel.add(new JLabel("Tên nhân viên:"));
-        panel.add(nameField);
-        panel.add(new JLabel("Email:"));
-        panel.add(emailField);
-        panel.add(new JLabel("Số điện thoại:"));
-        panel.add(phoneField);
-        panel.add(new JLabel("Mật khẩu:"));
-        panel.add(passwordField);
-        panel.add(new JLabel("Vai trò:"));
-        panel.add(roleComboBox);
-
-        int option = JOptionPane.showConfirmDialog(this, panel, "Thêm Nhân Viên", JOptionPane.OK_CANCEL_OPTION);
-
-        if (option == JOptionPane.OK_OPTION) {
-            String name = nameField.getText();
-            String email = emailField.getText();
-            String phone = phoneField.getText();
-            String password = new String(passwordField.getPassword());
-            String role = (String) roleComboBox.getSelectedItem();
-
-            if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Thông báo", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            int roleId = getRoleIdByName(role);
-
-            NhanVien newNhanVien = new NhanVien(null, name, email, phone, new Timestamp(System.currentTimeMillis()), password, roleId);
-            NhanVienDAO.addNhanVien(newNhanVien);
-            loadNhanVienData();
-        }
+    // Tạo ComboBox với danh sách vai trò từ cơ sở dữ liệu
+    JComboBox<String> roleComboBox = new JComboBox<>();
+    for (VaiTro vt : vaiTroList) {
+        roleComboBox.addItem(vt.getTenVaiTro());
     }
+
+    JPanel panel = new JPanel(new GridLayout(5, 2));
+    panel.add(new JLabel("Tên nhân viên:"));
+    panel.add(nameField);
+    panel.add(new JLabel("Email:"));
+    panel.add(emailField);
+    panel.add(new JLabel("Số điện thoại:"));
+    panel.add(phoneField);
+    panel.add(new JLabel("Mật khẩu:"));
+    panel.add(passwordField);
+    panel.add(new JLabel("Vai trò:"));
+    panel.add(roleComboBox);
+
+    int option = JOptionPane.showConfirmDialog(this, panel, "Thêm Nhân Viên", JOptionPane.OK_CANCEL_OPTION);
+
+    if (option == JOptionPane.OK_OPTION) {
+        String name = nameField.getText().trim();
+        String email = emailField.getText().trim();
+        String phone = phoneField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+        String role = (String) roleComboBox.getSelectedItem();
+
+        if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Kiểm tra định dạng email
+        if (!email.matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+            JOptionPane.showMessageDialog(this, "Email không hợp lệ! Vui lòng nhập email đúng định dạng.", "Thông báo", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Kiểm tra định dạng số điện thoại (chỉ chứa số)
+        if (!phone.matches("^\\d+$")) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ! Vui lòng chỉ nhập số.", "Thông báo", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int roleId = getRoleIdByName(role);
+
+        NhanVien newNhanVien = new NhanVien(null, name, email, phone, new Timestamp(System.currentTimeMillis()), password, roleId);
+        NhanVienDAO.addNhanVien(newNhanVien);
+        loadNhanVienData();
+    }
+}
 
     private int getRoleIdByName(String role) {
         for (VaiTro vt : vaiTroList) {
@@ -187,9 +199,7 @@ public class QL_NhanVien extends JFrame {
         return 2;  // Default to Nhân viên
     }
 
-    
-    
-private void editNhanVien() {
+    private void editNhanVien() {
     int selectedRow = table.getSelectedRow();
     if (selectedRow != -1) {
         String id = (String) table.getValueAt(selectedRow, 0);
@@ -199,7 +209,7 @@ private void editNhanVien() {
             JTextField nameField = new JTextField(selectedNhanVien.getTenNhanVien());
             JTextField emailField = new JTextField(selectedNhanVien.getEmail());
             JTextField phoneField = new JTextField(selectedNhanVien.getSoDienThoai());
-            JPasswordField passwordField = new JPasswordField("");  // Start with an empty password
+            JPasswordField passwordField = new JPasswordField(); // Bắt đầu với mật khẩu trống
 
             JComboBox<String> roleComboBox = new JComboBox<>();
             for (VaiTro vt : vaiTroList) {
@@ -220,14 +230,26 @@ private void editNhanVien() {
             int option = JOptionPane.showConfirmDialog(this, panel, "Sửa Nhân Viên", JOptionPane.OK_CANCEL_OPTION);
 
             if (option == JOptionPane.OK_OPTION) {
-                String name = nameField.getText();
-                String email = emailField.getText();
-                String phone = phoneField.getText();
-                String password = new String(passwordField.getPassword());  // Get password input
+                String name = nameField.getText().trim();
+                String email = emailField.getText().trim();
+                String phone = phoneField.getText().trim();
+                String password = new String(passwordField.getPassword()).trim(); // Lấy mật khẩu người dùng nhập
                 String role = (String) roleComboBox.getSelectedItem();
 
-                if (name.isEmpty() || email.isEmpty() || phone.isEmpty() ||  !selectedNhanVien.getMatKhau().isEmpty()) {
+                if (name.isEmpty() || email.isEmpty() || phone.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Thông báo", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Kiểm tra định dạng email
+                if (!email.matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+                    JOptionPane.showMessageDialog(this, "Email không hợp lệ! Vui lòng nhập email đúng định dạng.", "Thông báo", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Kiểm tra định dạng số điện thoại (chỉ chứa số)
+                if (!phone.matches("^\\d+$")) {
+                    JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ! Vui lòng chỉ nhập số.", "Thông báo", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -237,24 +259,20 @@ private void editNhanVien() {
                 selectedNhanVien.setEmail(email);
                 selectedNhanVien.setSoDienThoai(phone);
 
-                // Only update password if a new one is provided
+                // Cập nhật mật khẩu chỉ khi người dùng nhập mật khẩu mới
                 if (!password.isEmpty()) {
                     selectedNhanVien.setMatKhau(password);
-                } else {
-                    // Retain the existing password if the field is left empty
-                    selectedNhanVien.setMatKhau(selectedNhanVien.getMatKhau());
                 }
 
                 selectedNhanVien.setVaiTroId(roleId);
 
-                NhanVienDAO.updateNhanVien(selectedNhanVien);  // Update the employee details
-                loadNhanVienData();  // Reload employee data to reflect changes
+                NhanVienDAO.updateNhanVien(selectedNhanVien); // Cập nhật thông tin nhân viên
+                loadNhanVienData(); // Tải lại dữ liệu nhân viên để hiển thị thay đổi
             }
         }
     }
 }
- 
-    
+
     private void deleteNhanVien() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow != -1) {
